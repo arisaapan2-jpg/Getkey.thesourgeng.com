@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Get Key - Key System</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+  .navbar {
+    width: 100%; max-width: 480px;
+    background: #1e2a3a;
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .navbar span { color: #fff; font-weight: 700; font-size: 18px; }
+  .hamburger { display: flex; flex-direction: column; gap: 4px; cursor: pointer; }
+  .hamburger div { width: 22px; height: 2px; background: #aaa; border-radius: 2px; }
+  .card {
+    width: 100%; max-width: 480px;
+    background: #1e2a3a;
+    border-radius: 16px;
+    padding: 28px 24px;
+  }
+  .card h2 { color: #fff; font-size: 22px; font-weight: 700; margin-bottom: 20px; }
+  .progress-label { color: #ccc; font-size: 14px; margin-bottom: 8px; }
+  .progress-bar-bg {
+    width: 100%; height: 6px;
+    background: #2e3d50;
+    border-radius: 999px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: #22c55e;
+    border-radius: 999px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+  .btn-start {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 14px;
+    background: #22c55e; color: #fff;
+    font-size: 16px; font-weight: 700;
+    border: none; border-radius: 12px;
+    cursor: pointer; margin-bottom: 28px;
+    transition: background 0.2s;
+  }
+  .btn-start:hover { background: #16a34a; }
+  .btn-start:disabled { background: #555; cursor: not-allowed; }
+  .divider { border: none; border-top: 1px solid #2e3d50; margin-bottom: 18px; }
+  .key-table-header {
+    display: flex; justify-content: space-between;
+    color: #aaa; font-size: 12px; font-weight: 600;
+    letter-spacing: 1px; margin-bottom: 12px;
+  }
+  .key-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid #2e3d50;
+  }
+  .btn-copy {
+    background: #2e3d50; border: none; border-radius: 8px;
+    padding: 10px 12px; cursor: pointer; color: #aaa; font-size: 16px;
+  }
+  .btn-copy:hover { background: #3a4f66; }
+  .key-text { color: #fff; font-size: 15px; font-weight: 600; flex: 1; }
+  .time-table-header {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    color: #aaa; font-size: 12px; font-weight: 600;
+    letter-spacing: 1px; margin-bottom: 12px; text-transform: uppercase;
+  }
+  .time-row {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    align-items: center; padding: 10px 0;
+    border-bottom: 1px solid #2e3d50;
+  }
+  .time-left { color: #ef4444; font-weight: 700; font-size: 15px; }
+  .time-left.active { color: #22c55e; }
+  .badge-expired {
+    background: #f97316; color: #fff;
+    font-size: 11px; font-weight: 700;
+    padding: 4px 10px; border-radius: 999px; display: inline-block;
+  }
+  .badge-active {
+    background: #22c55e; color: #fff;
+    font-size: 11px; font-weight: 700;
+    padding: 4px 10px; border-radius: 999px; display: inline-block;
+  }
+  .btn-renew {
+    background: transparent;
+    border: 1.5px solid #f97316; color: #f97316;
+    font-size: 12px; font-weight: 700;
+    padding: 6px 12px; border-radius: 8px; cursor: pointer;
+  }
+  .btn-renew:hover { background: #f97316; color: #fff; }
+  .footer-link {
+    text-align: center; margin-top: 24px;
+    color: #aaa; font-size: 13px;
+    text-decoration: underline; cursor: pointer;
+  }
+  .toast {
+    position: fixed; bottom: 30px; left: 50%;
+    transform: translateX(-50%);
+    background: #22c55e; color: #fff;
+    padding: 10px 24px; border-radius: 8px;
+    font-weight: 600; font-size: 14px;
+    opacity: 0; transition: opacity 0.3s;
+    pointer-events: none; z-index: 999;
+  }
+  .toast.show { opacity: 1; }
+  #section-keys { display: none; }
+  #section-time { display: none; }
+</style>
+</head>
+<body>
+
+<div class="navbar">
+  <span>KeySystem</span>
+  <div class="hamburger"><div></div><div></div><div></div></div>
+</div>
+
+<div class="card">
+  <h2>🔑 Key System</h2>
+  <p class="progress-label" id="progressLabel">Progress: 0/1</p>
+  <div class="progress-bar-bg">
+    <div class="progress-bar-fill" id="progressBar"></div>
+  </div>
+  <button class="btn-start" id="btnStart" onclick="startProcess()">↗ START</button>
+  <hr class="divider">
+
+  <div id="section-keys">
+    <div class="key-table-header">
+      <span id="keyCountLabel">YOUR KEYS (0/1)</span>
+    </div>
+    <div class="key-row">
+      <button class="btn-copy" onclick="copyKey()">📋</button>
+      <span>🔑</span>
+      <span class="key-text" id="keyDisplay">-</span>
+    </div>
+    <hr class="divider" style="margin-top:16px;">
+  </div>
+
+  <div id="section-time">
+    <div class="time-table-header">
+      <span>TIME LEFT</span><span>STATUS</span><span>ACTIONS</span>
+    </div>
+    <div class="time-row">
+      <span class="time-left" id="timeLeftDisplay">0:0:0</span>
+      <span id="statusBadge"><span class="badge-expired">EXPIRED</span></span>
+      <button class="btn-renew" onclick="renewKey()">🔄 RENEW</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer-link">Privacy Policy for Key System</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDR19z0mJIExC6ZphGnDZOhiXDM8Oz5E24",
+    authDomain: "keysystem-19a47.firebaseapp.com",
+    databaseURL: "https://keysystem-19a47-default-rtdb.firebaseio.com",
+    projectId: "keysystem-19a47",
+    storageBucket: "keysystem-19a47.firebasestorage.app",
+    messagingSenderId: "291355238456",
+    appId: "1:291355238456:web:3dd8dbbddf68f8292b46cd"
+  };
+
+  const LINKVERTISE_URL = "https://direct-link.net/5342274/WtXBBmVIWKZd";
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const KEY_DURATION_MS = 24 * 60 * 60 * 1000;
+
+  let deviceId = localStorage.getItem("deviceId");
+  if (!deviceId) {
+    deviceId = "dev_" + Math.random().toString(36).substr(2, 12);
+    localStorage.setItem("deviceId", deviceId);
+  }
+
+  let step = parseInt(localStorage.getItem("step") || "0");
+  let timerInterval = null;
+
+  function generateKey() {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let key = "";
+    for (let i = 0; i < 32; i++) key += chars[Math.floor(Math.random() * chars.length)];
+    return key;
+  }
+
+  function showToast(msg, color = "#22c55e") {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.style.background = color;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 2500);
+  }
+
+  function updateProgress() {
+    document.getElementById("progressBar").style.width = (step >= 1 ? 100 : 0) + "%";
+    document.getElementById("progressLabel").textContent = `Progress: ${Math.min(step,1)}/1`;
+  }
+
+  function startCountdown(expireAt) {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      const remaining = expireAt - Date.now();
+      if (remaining <= 0) {
+        clearInterval(timerInterval);
+        document.getElementById("timeLeftDisplay").textContent = "0:0:0";
+        document.getElementById("timeLeftDisplay").className = "time-left";
+        document.getElementById("statusBadge").innerHTML = '<span class="badge-expired">EXPIRED</span>';
+        document.getElementById("section-keys").style.display = "none";
+        document.getElementById("section-time").style.display = "block";
+        document.getElementById("btnStart").disabled = false;
+        document.getElementById("btnStart").textContent = "↗ START";
+        step = 0; localStorage.setItem("step", "0");
+        updateProgress();
+        return;
+      }
+      const h = Math.floor(remaining / 3600000);
+      const m = Math.floor((remaining % 3600000) / 60000);
+      const s = Math.floor((remaining % 60000) / 1000);
+      document.getElementById("timeLeftDisplay").textContent = `${h}:${m}:${s}`;
+      document.getElementById("timeLeftDisplay").className = "time-left active";
+      document.getElementById("statusBadge").innerHTML = '<span class="badge-active">ACTIVE</span>';
+    }, 1000);
+  }
+
+  async function loadKey() {
+    const snap = await get(ref(db, "keys/" + deviceId));
+    if (snap.exists()) {
+      const data = snap.val();
+      if (data.expireAt > Date.now()) {
+        window._currentKey = data.key;
+        document.getElementById("keyDisplay").textContent = data.key.substring(0,8) + "..." + data.key.substring(24);
+        document.getElementById("keyCountLabel").textContent = "YOUR KEYS (1/1)";
+        document.getElementById("section-keys").style.display = "block";
+        document.getElementById("section-time").style.display = "block";
+        document.getElementById("btnStart").disabled = true;
+        document.getElementById("btnStart").textContent = "✅ KEY AKTIF";
+        step = 1; localStorage.setItem("step", "1");
+        updateProgress();
+        startCountdown(data.expireAt);
+      } else {
+        document.getElementById("section-time").style.display = "block";
+      }
+    }
+  }
+
+  async function saveKey(key) {
+    const expireAt = Date.now() + KEY_DURATION_MS;
+    await set(ref(db, "keys/" + deviceId), { key, expireAt, createdAt: Date.now() });
+    window._currentKey = key;
+    document.getElementById("keyDisplay").textContent = key.substring(0,8) + "..." + key.substring(24);
+    document.getElementById("keyCountLabel").textContent = "YOUR KEYS (1/1)";
+    document.getElementById("section-keys").style.display = "block";
+    document.getElementById("section-time").style.display = "block";
+    document.getElementById("btnStart").disabled = true;
+    document.getElementById("btnStart").textContent = "✅ KEY AKTIF";
+    startCountdown(expireAt);
+    showToast("Key berhasil dibuat! Salin untuk dipakai di website utama.");
+  }
+
+  window.startProcess = function () {
+    step++;
+    localStorage.setItem("step", String(step));
+    updateProgress();
+    window.open(LINKVERTISE_URL, "_blank");
+    setTimeout(async () => {
+      if (step >= 1) await saveKey(generateKey());
+    }, 3000);
+  };
+
+  window.copyKey = function () {
+    if (window._currentKey) {
+      navigator.clipboard.writeText(window._currentKey).then(() => showToast("Key disalin!"));
+    }
+  };
+
+  window.renewKey = function () {
+    step = 0; localStorage.setItem("step", "0");
+    updateProgress();
+    document.getElementById("section-time").style.display = "none";
+    document.getElementById("section-keys").style.display = "none";
+    document.getElementById("btnStart").disabled = false;
+    document.getElementById("btnStart").textContent = "↗ START";
+    showToast("Klik START untuk perpanjang key.");
+  };
+
+  updateProgress();
+  loadKey();
+</script>
+</body>
+</html>
