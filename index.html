@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Website Utama</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .logo { color: #fff; font-size: 28px; font-weight: 800; margin-bottom: 8px; text-align: center; }
+  .subtitle { color: #aaa; font-size: 14px; margin-bottom: 36px; text-align: center; }
+  .card {
+    width: 100%; max-width: 420px;
+    background: #1e2a3a; border-radius: 18px; padding: 30px 24px;
+  }
+  .card h3 { color: #fff; font-size: 18px; font-weight: 700; margin-bottom: 20px; text-align: center; }
+  input {
+    width: 100%; padding: 13px 16px;
+    background: #2e3d50; border: 1.5px solid #3a4f66;
+    border-radius: 10px; color: #fff; font-size: 15px;
+    outline: none; margin-bottom: 14px; display: block;
+  }
+  input:focus { border-color: #22c55e; }
+  input::placeholder { color: #666; }
+  .btn-verify {
+    width: 100%; padding: 14px;
+    background: #22c55e; color: #fff;
+    font-size: 16px; font-weight: 700;
+    border: none; border-radius: 12px;
+    cursor: pointer; margin-bottom: 14px;
+  }
+  .btn-verify:hover { background: #16a34a; }
+  .divider-or {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+  }
+  .divider-or::before,.divider-or::after { content:''; flex:1; height:1px; background:#2e3d50; }
+  .divider-or span { color: #666; font-size: 13px; }
+  .btn-getkey {
+    width: 100%; padding: 14px;
+    background: transparent; color: #22c55e;
+    font-size: 15px; font-weight: 700;
+    border: 2px solid #22c55e; border-radius: 12px; cursor: pointer;
+  }
+  .btn-getkey:hover { background: #22c55e; color: #fff; }
+  .result-box {
+    margin-top: 16px; padding: 14px 16px;
+    border-radius: 10px; font-size: 14px; font-weight: 600;
+    display: none; text-align: center;
+  }
+  .success { background: #14532d; color: #4ade80; border: 1px solid #22c55e; }
+  .error { background: #450a0a; color: #f87171; border: 1px solid #ef4444; }
+  .expired { background: #431407; color: #fb923c; border: 1px solid #f97316; }
+  #mainContent { display: none; margin-top: 20px; text-align: center; color: #fff; }
+  #mainContent h2 { font-size: 22px; margin-bottom: 8px; }
+  #mainContent p { color: #aaa; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="logo">🔐 Website Ku</div>
+<div class="subtitle">Masukkan key untuk mengakses konten</div>
+
+<div class="card">
+  <h3>Verifikasi Key</h3>
+  <input type="text" id="keyInput" placeholder="Masukkan key kamu di sini..." />
+  <button class="btn-verify" onclick="verifyKey()">✅ Verifikasi Key</button>
+  <div class="divider-or"><span>atau</span></div>
+
+  <!-- GANTI URL INI SETELAH UPLOAD KE HOSTING -->
+  <button class="btn-getkey" onclick="window.open('get-key.html','_blank')">🔑 Get Key</button>
+
+  <div class="result-box" id="resultBox"></div>
+  <div id="mainContent">
+    <h2>🎉 Selamat Datang!</h2>
+    <p>Key valid. Kamu bisa akses semua konten.</p>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDR19z0mJIExC6ZphGnDZOhiXDM8Oz5E24",
+    authDomain: "keysystem-19a47.firebaseapp.com",
+    databaseURL: "https://keysystem-19a47-default-rtdb.firebaseio.com",
+    projectId: "keysystem-19a47",
+    storageBucket: "keysystem-19a47.firebasestorage.app",
+    messagingSenderId: "291355238456",
+    appId: "1:291355238456:web:3dd8dbbddf68f8292b46cd"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  function showResult(msg, type) {
+    const box = document.getElementById("resultBox");
+    box.textContent = msg;
+    box.className = "result-box " + (type || "");
+    box.style.display = "block";
+  }
+
+  window.verifyKey = async function () {
+    const inputKey = document.getElementById("keyInput").value.trim();
+    if (!inputKey) { showResult("⚠️ Masukkan key dulu!", "error"); return; }
+    showResult("⏳ Mengecek key...", "");
+    try {
+      const snap = await get(ref(db, "keys"));
+      if (!snap.exists()) { showResult("❌ Key tidak ditemukan!", "error"); return; }
+      const allKeys = snap.val();
+      let found = false;
+      for (const id in allKeys) {
+        const data = allKeys[id];
+        if (data.key === inputKey) {
+          found = true;
+          if (data.expireAt > Date.now()) {
+            const r = data.expireAt - Date.now();
+            const h = Math.floor(r / 3600000);
+            const m = Math.floor((r % 3600000) / 60000);
+            showResult(`✅ Key valid! Sisa: ${h} jam ${m} menit`, "success");
+            document.getElementById("mainContent").style.display = "block";
+          } else {
+            showResult("⏰ Key expired! Pergi ke Get Key untuk renew.", "expired");
+            document.getElementById("mainContent").style.display = "none";
+          }
+          break;
+        }
+      }
+      if (!found) showResult("❌ Key tidak valid!", "error");
+    } catch (e) {
+      showResult("⚠️ Gagal cek key. Periksa koneksi.", "error");
+    }
+  };
+
+  document.getElementById("keyInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") window.verifyKey();
+  });
+</script>
+</body>
+  </html>
