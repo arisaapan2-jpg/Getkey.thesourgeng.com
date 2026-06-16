@@ -124,6 +124,36 @@
   .toast.show { opacity: 1; }
   #section-keys { display: none; }
   #section-time { display: none; }
+
+  /* BAGIAN TAMBAHAN UNTUK SINKRON DENGAN DELTA */
+  .delta-info {
+    background: rgba(15, 52, 96, 0.3);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    color: #fff;
+    text-align: center;
+  }
+  .delta-info p { font-size: 14px; margin-bottom: 8px; }
+  .btn-open-delta {
+    background: #0f3460;
+    color: #fff;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .key-full-display {
+    display: none;
+    margin-top: 15px;
+    padding: 10px;
+    background: #2e3d50;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    word-break: break-all;
+  }
 </style>
 </head>
 <body>
@@ -135,6 +165,18 @@
 
 <div class="card">
   <h2>🔑 Key System</h2>
+
+  <!-- BAGIAN TAMBAHAN: INFORMASI UNTUK DELTA -->
+  <div class="delta-info">
+    <p>⚠️ Gunakan kunci ini di Delta Executor!</p>
+    <button class="btn-open-delta" onclick="showDeltaInfo()">💡 Cara Menggunakan di Delta</button>
+    <div class="key-full-display" id="deltaGuide">
+      1. Jalankan loadstring pendek di Delta<br>
+      2. Masukkan kunci di bawah ke Delta<br>
+      3. Klik verifikasi untuk aktifkan fitur!
+    </div>
+  </div>
+
   <p class="progress-label" id="progressLabel">Progress: 0/1</p>
   <div class="progress-bar-bg">
     <div class="progress-bar-fill" id="progressBar"></div>
@@ -147,10 +189,12 @@
       <span id="keyCountLabel">YOUR KEYS (0/1)</span>
     </div>
     <div class="key-row">
-      <button class="btn-copy" onclick="copyKey()">📋</button>
+      <button class="btn-copy" onclick="copyKey()">📋 Salin Kunci</button>
       <span>🔑</span>
       <span class="key-text" id="keyDisplay">-</span>
     </div>
+    <!-- BAGIAN TAMBAHAN: TAMPILKAN KUNCI LENGKAP -->
+    <div class="key-full-display" id="fullKeyDisplay"></div>
     <hr class="divider" style="margin-top:16px;">
   </div>
 
@@ -183,7 +227,7 @@
     appId: "1:291355238456:web:3dd8dbbddf68f8292b46cd"
   };
 
-  const LINKVERTISE_URL = "https://direct-link.net/5342274/WtXBBmVIWKZd";
+  const LINKVERTISE_URL = "https://direct-link.net/5342274/L8enRPiuy6Re";
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
@@ -251,6 +295,8 @@
       if (data.expireAt > Date.now()) {
         window._currentKey = data.key;
         document.getElementById("keyDisplay").textContent = data.key.substring(0,8) + "..." + data.key.substring(24);
+        document.getElementById("fullKeyDisplay").textContent = "Kunci Lengkap: " + data.key;
+        document.getElementById("fullKeyDisplay").style.display = "block";
         document.getElementById("keyCountLabel").textContent = "YOUR KEYS (1/1)";
         document.getElementById("section-keys").style.display = "block";
         document.getElementById("section-time").style.display = "block";
@@ -270,13 +316,15 @@
     await set(ref(db, "keys/" + deviceId), { key, expireAt, createdAt: Date.now() });
     window._currentKey = key;
     document.getElementById("keyDisplay").textContent = key.substring(0,8) + "..." + key.substring(24);
+    document.getElementById("fullKeyDisplay").textContent = "Kunci Lengkap: " + key;
+    document.getElementById("fullKeyDisplay").style.display = "block";
     document.getElementById("keyCountLabel").textContent = "YOUR KEYS (1/1)";
     document.getElementById("section-keys").style.display = "block";
     document.getElementById("section-time").style.display = "block";
     document.getElementById("btnStart").disabled = true;
     document.getElementById("btnStart").textContent = "✅ KEY AKTIF";
     startCountdown(expireAt);
-    showToast("Key berhasil dibuat! Salin untuk dipakai di website utama.");
+    showToast("Key berhasil dibuat! Salin untuk dipakai di Delta.");
   }
 
   window.startProcess = function () {
@@ -291,7 +339,7 @@
 
   window.copyKey = function () {
     if (window._currentKey) {
-      navigator.clipboard.writeText(window._currentKey).then(() => showToast("Key disalin!"));
+      navigator.clipboard.writeText(window._currentKey).then(() => showToast("Kunci disalin ke clipboard!"));
     }
   };
 
@@ -302,8 +350,14 @@
     document.getElementById("section-keys").style.display = "none";
     document.getElementById("btnStart").disabled = false;
     document.getElementById("btnStart").textContent = "↗ START";
-    showToast("Klik START untuk perpanjang key.");
+    showToast("Klik START untuk perpanjang kunci.");
   };
+
+  // BAGIAN TAMBAHAN: FUNGSI UNTUK DELTA
+  window.showDeltaInfo = function() {
+    const guide = document.getElementById("deltaGuide");
+    guide.style.display = guide.style.display === "block" ? "none" : "block";
+  }
 
   updateProgress();
   loadKey();
